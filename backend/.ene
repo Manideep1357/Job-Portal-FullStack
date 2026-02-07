@@ -1,0 +1,6 @@
+MONGO_URI=mongodb://127.0.0.1:27017/jobportal
+SECRET_KEY=manideep_123
+PORT=3000
+CLOUDINARY_CLOUD_NAME=mee_cloud_name
+CLOUDINARY_API_KEY=mee_api_key
+CLOUDINARY_API_SECRET=mee_api_secret

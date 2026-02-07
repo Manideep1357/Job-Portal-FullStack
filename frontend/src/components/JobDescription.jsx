@@ -7,12 +7,17 @@ import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
+import Lottie from "lottie-react";
+import successAnim from "@/assets/success-check.json";
+import { motion, AnimatePresence } from "framer-motion"; // Adding framer-motion for smooth entry
 
 const JobDescription = () => {
-    const {singleJob} = useSelector(store => store.job);
-    const {user} = useSelector(store=>store.auth);
+    const { singleJob } = useSelector(store => store.job);
+    const { user } = useSelector(store => store.auth);
     const isIntiallyApplied = singleJob?.applications?.some(application => application.applicant === user?._id) || false;
+
     const [isApplied, setIsApplied] = useState(isIntiallyApplied);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     const params = useParams();
     const jobId = params.id;
@@ -20,14 +25,21 @@ const JobDescription = () => {
 
     const applyJobHandler = async () => {
         try {
-            const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {withCredentials:true});
-            
-            if(res.data.success){
-                setIsApplied(true); // Update the local state
-                const updatedSingleJob = {...singleJob, applications:[...singleJob.applications,{applicant:user?._id}]}
-                dispatch(setSingleJob(updatedSingleJob)); // helps us to real time UI update
-                toast.success(res.data.message);
+            const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
 
+            if (res.data.success) {
+                setIsApplied(true);
+                const updatedSingleJob = { ...singleJob, applications: [...singleJob.applications, { applicant: user?._id }] }
+                dispatch(setSingleJob(updatedSingleJob));
+
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+
+                setShowSuccess(true);
+                setTimeout(() => setShowSuccess(false), 3000);
+
+                toast.success(res.data.message);
             }
         } catch (error) {
             console.log(error);
@@ -35,26 +47,56 @@ const JobDescription = () => {
         }
     }
 
-    useEffect(()=>{
+    useEffect(() => {
         const fetchSingleJob = async () => {
             try {
-                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`,{withCredentials:true});
-                if(res.data.success){
+                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });
+                if (res.data.success) {
                     dispatch(setSingleJob(res.data.job));
-                    setIsApplied(res.data.job.applications.some(application=>application.applicant === user?._id)) // Ensure the state is in sync with fetched data
+                    setIsApplied(res.data.job.applications.some(application => application.applicant === user?._id))
                 }
             } catch (error) {
                 console.log(error);
             }
         }
-        fetchSingleJob(); 
-    },[jobId,dispatch, user?._id]);
+        fetchSingleJob();
+    }, [jobId, dispatch, user?._id]);
 
     return (
-        <div className='max-w-7xl mx-auto my-10'>
-            <div className='flex items-center justify-between'>
+        <div className='max-w-7xl mx-auto my-10 relative'>
+            {/* Lottie Success Animation Overlay - Fixed Alignment */}
+            <AnimatePresence>
+                {showSuccess && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-md"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            className="w-72 h-80 bg-white rounded-3xl shadow-2xl p-6 flex flex-col items-center justify-center border border-gray-100"
+                        >
+                            {/* Animation Container with Fixed Height */}
+                            <div className="w-40 h-40">
+                                <Lottie animationData={successAnim} loop={false} />
+                            </div>
+                            
+                            {/* Improved Text Styling and Alignment */}
+                            <div className="text-center mt-4">
+                                <h2 className="text-2xl font-bold text-green-600">Success!</h2>
+                                <p className='font-medium text-gray-500 mt-1'>Applied Successfully!</p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div className='flex items-center justify-between px-4'>
                 <div>
-                    <h1 className='font-bold text-xl'>{singleJob?.title}</h1>
+                    <h1 className='font-bold text-2xl'>{singleJob?.title}</h1>
                     <div className='flex items-center gap-2 mt-4'>
                         <Badge className={'text-blue-700 font-bold'} variant="ghost">{singleJob?.postion} Positions</Badge>
                         <Badge className={'text-[#F83002] font-bold'} variant="ghost">{singleJob?.jobType}</Badge>
@@ -62,24 +104,25 @@ const JobDescription = () => {
                     </div>
                 </div>
                 <Button
-                onClick={isApplied ? null : applyJobHandler}
+                    onClick={isApplied ? null : applyJobHandler}
                     disabled={isApplied}
-                    className={`rounded-lg ${isApplied ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#7209b7] hover:bg-[#5f32ad]'}`}>
+                    className={`rounded-lg px-6 py-2 font-semibold ${isApplied ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#7209b7] hover:bg-[#5f32ad]'}`}>
                     {isApplied ? 'Already Applied' : 'Apply Now'}
                 </Button>
             </div>
-            <h1 className='border-b-2 border-b-gray-300 font-medium py-4'>Job Description</h1>
-            <div className='my-4'>
-                <h1 className='font-bold my-1'>Role: <span className='pl-4 font-normal text-gray-800'>{singleJob?.title}</span></h1>
-                <h1 className='font-bold my-1'>Location: <span className='pl-4 font-normal text-gray-800'>{singleJob?.location}</span></h1>
-                <h1 className='font-bold my-1'>Description: <span className='pl-4 font-normal text-gray-800'>{singleJob?.description}</span></h1>
-                <h1 className='font-bold my-1'>Experience: <span className='pl-4 font-normal text-gray-800'>{singleJob?.experience} yrs</span></h1>
-                <h1 className='font-bold my-1'>Salary: <span className='pl-4 font-normal text-gray-800'>{singleJob?.salary}LPA</span></h1>
-                <h1 className='font-bold my-1'>Total Applicants: <span className='pl-4 font-normal text-gray-800'>{singleJob?.applications?.length}</span></h1>
-                <h1 className='font-bold my-1'>Posted Date: <span className='pl-4 font-normal text-gray-800'>{singleJob?.createdAt.split("T")[0]}</span></h1>
+
+            <h1 className='border-b-2 border-b-gray-300 font-semibold py-4 px-4 mt-8'>Job Description</h1>
+            <div className='my-4 px-4 space-y-3'>
+                <h1 className='font-bold'>Role: <span className='pl-4 font-normal text-gray-700'>{singleJob?.title}</span></h1>
+                <h1 className='font-bold'>Location: <span className='pl-4 font-normal text-gray-700'>{singleJob?.location}</span></h1>
+                <h1 className='font-bold'>Description: <span className='pl-4 font-normal text-gray-700'>{singleJob?.description}</span></h1>
+                <h1 className='font-bold'>Experience: <span className='pl-4 font-normal text-gray-700'>{singleJob?.experienceLevel} yrs</span></h1>
+                <h1 className='font-bold'>Salary: <span className='pl-4 font-normal text-gray-700'>{singleJob?.salary}LPA</span></h1>
+                <h1 className='font-bold'>Total Applicants: <span className='pl-4 font-normal text-gray-700'>{singleJob?.applications?.length}</span></h1>
+                <h1 className='font-bold'>Posted Date: <span className='pl-4 font-normal text-gray-700'>{singleJob?.createdAt?.split("T")[0]}</span></h1>
             </div>
         </div>
     )
 }
 
-export default JobDescription
+export default JobDescription   

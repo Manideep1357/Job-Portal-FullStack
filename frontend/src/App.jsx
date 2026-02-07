@@ -14,7 +14,8 @@ import AdminJobs from "./components/admin/AdminJobs";
 import PostJob from './components/admin/PostJob'
 import Applicants from './components/admin/Applicants'
 import ProtectedRoute from './components/admin/ProtectedRoute'
-
+// Ikkada kotha component ni import cheyandi
+import AdminDashboard from './components/admin/AdminDashboard' 
 
 const appRouter = createBrowserRouter([
   {
@@ -45,7 +46,11 @@ const appRouter = createBrowserRouter([
     path: "/profile",
     element: <Profile />
   },
-  // admin ke liye yha se start hoga
+  // Admin routes start here
+  {
+    path: "/admin/dashboard", // New Analytics Dashboard Route
+    element: <ProtectedRoute><AdminDashboard /></ProtectedRoute>
+  },
   {
     path:"/admin/companies",
     element: <ProtectedRoute><Companies/></ProtectedRoute>
@@ -70,10 +75,9 @@ const appRouter = createBrowserRouter([
     path:"/admin/jobs/:id/applicants",
     element:<ProtectedRoute><Applicants/></ProtectedRoute> 
   },
-
 ])
-function App() {
 
+function App() {
   return (
     <div>
       <RouterProvider router={appRouter} />

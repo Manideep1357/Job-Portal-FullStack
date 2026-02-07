@@ -14,7 +14,16 @@ export const register = async (req, res) => {
                 success: false
             });
         };
+
         const file = req.file;
+        // FIX: Check if file exists before processing to avoid 'originalname' error
+        if (!file) {
+            return res.status(400).json({
+                message: "Profile picture is required. Please upload an image.",
+                success: false
+            });
+        }
+
         const fileUri = getDataUri(file);
         const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
 
@@ -44,8 +53,13 @@ export const register = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 }
+
 export const login = async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -101,6 +115,7 @@ export const login = async (req, res) => {
         console.log(error);
     }
 }
+
 export const logout = async (req, res) => {
     try {
         return res.status(200).cookie("token", "", { maxAge: 0 }).json({
@@ -111,16 +126,19 @@ export const logout = async (req, res) => {
         console.log(error);
     }
 }
+
 export const updateProfile = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
         
         const file = req.file;
-        // cloudinary ayega idhar
-        const fileUri = getDataUri(file);
-        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
-
-
+        let cloudResponse;
+        
+        // FIX: Only upload to cloudinary if a new file is provided during update
+        if (file) {
+            const fileUri = getDataUri(file);
+            cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        }
 
         let skillsArray;
         if(skills){
@@ -135,6 +153,7 @@ export const updateProfile = async (req, res) => {
                 success: false
             })
         }
+        
         // updating data
         if(fullname) user.fullname = fullname
         if(email) user.email = email
@@ -142,12 +161,11 @@ export const updateProfile = async (req, res) => {
         if(bio) user.profile.bio = bio
         if(skills) user.profile.skills = skillsArray
       
-        // resume comes later here...
+        // Update resume/file only if uploaded
         if(cloudResponse){
-            user.profile.resume = cloudResponse.secure_url // save the cloudinary url
-            user.profile.resumeOriginalName = file.originalname // Save the original file name
+            user.profile.resume = cloudResponse.secure_url 
+            user.profile.resumeOriginalName = file.originalname 
         }
-
 
         await user.save();
 

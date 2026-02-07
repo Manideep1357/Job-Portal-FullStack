@@ -9,6 +9,7 @@ import axios from 'axios'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
+import { motion } from 'framer-motion' // 1. Framer Motion Import
 
 const Navbar = () => {
     const { user } = useSelector(store => store.auth);
@@ -28,31 +29,53 @@ const Navbar = () => {
             toast.error(error.response.data.message);
         }
     }
+
+    // Common Nav Link with Animation Logic
+    const NavItem = ({ to, children }) => (
+        <li className='relative group'>
+            <Link to={to} className='hover:text-[#6A38C2] transition-colors duration-300'>
+                {children}
+            </Link>
+            {/* 2. Animated Underline on Hover */}
+            <motion.div 
+                className='absolute bottom-[-4px] left-0 h-[2px] bg-[#6A38C2]'
+                initial={{ width: 0 }}
+                whileHover={{ width: '100%' }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+            />
+        </li>
+    );
+
     return (
-        <div className='bg-white'>
-            <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
-                <div>
-                    <h1 className='text-2xl font-bold'>Job<span className='text-[#F83002]'>Portal</span></h1>
-                </div>
+        <div className='bg-white border-b border-gray-100 sticky top-0 z-50'>
+            <div className='flex items-center justify-between mx-auto max-w-7xl h-16 px-4'>
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                >
+                    <h1 className='text-2xl font-bold cursor-pointer' onClick={() => navigate("/")}>
+                        Job<span className='text-[#F83002]'>Portal</span>
+                    </h1>
+                </motion.div>
+                
                 <div className='flex items-center gap-12'>
-                    <ul className='flex font-medium items-center gap-5'>
+                    <ul className='flex font-medium items-center gap-6'>
                         {
                             user && user.role === 'recruiter' ? (
                                 <>
-                                    <li><Link to="/admin/companies">Companies</Link></li>
-                                    <li><Link to="/admin/jobs">Jobs</Link></li>
+                                    <NavItem to="/admin/companies">Companies</NavItem>
+                                    <NavItem to="/admin/jobs">Jobs</NavItem>
                                 </>
                             ) : (
                                 <>
-                                    <li><Link to="/">Home</Link></li>
-                                    <li><Link to="/jobs">Jobs</Link></li>
-                                    <li><Link to="/browse">Browse</Link></li>
+                                    <NavItem to="/">Home</NavItem>
+                                    <NavItem to="/jobs">Jobs</NavItem>
+                                    <NavItem to="/browse">Browse</NavItem>
                                 </>
                             )
                         }
-
-
                     </ul>
+
                     {
                         !user ? (
                             <div className='flex items-center gap-2'>
@@ -62,34 +85,35 @@ const Navbar = () => {
                         ) : (
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Avatar className="cursor-pointer">
-                                        <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
-                                    </Avatar>
+                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                        <Avatar className="cursor-pointer border-2 border-transparent hover:border-[#6A38C2] transition-all">
+                                            <AvatarImage src={user?.profile?.profilePhoto} alt="@user" />
+                                        </Avatar>
+                                    </motion.div>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80">
+                                <PopoverContent className="w-80 shadow-xl border-gray-100">
                                     <div className=''>
-                                        <div className='flex gap-2 space-y-2'>
-                                            <Avatar className="cursor-pointer">
-                                                <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
+                                        <div className='flex gap-3 items-center'>
+                                            <Avatar className="h-12 w-12">
+                                                <AvatarImage src={user?.profile?.profilePhoto} alt="@user" />
                                             </Avatar>
                                             <div>
-                                                <h4 className='font-medium'>{user?.fullname}</h4>
-                                                <p className='text-sm text-muted-foreground'>{user?.profile?.bio}</p>
+                                                <h4 className='font-bold text-lg'>{user?.fullname}</h4>
+                                                <p className='text-sm text-muted-foreground line-clamp-1'>{user?.profile?.bio}</p>
                                             </div>
                                         </div>
-                                        <div className='flex flex-col my-2 text-gray-600'>
+                                        <div className='flex flex-col my-4 space-y-2 border-t pt-4'>
                                             {
                                                 user && user.role === 'student' && (
-                                                    <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                        <User2 />
-                                                        <Button variant="link"> <Link to="/profile">View Profile</Link></Button>
+                                                    <div className='flex items-center gap-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer transition-colors'>
+                                                        <User2 className='text-gray-600' size={20}/>
+                                                        <Link to="/profile" className='text-sm font-medium text-gray-700'>View Profile</Link>
                                                     </div>
                                                 )
                                             }
-
-                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                <LogOut />
-                                                <Button onClick={logoutHandler} variant="link">Logout</Button>
+                                            <div onClick={logoutHandler} className='flex items-center gap-3 p-2 hover:bg-red-50 rounded-md cursor-pointer transition-colors group'>
+                                                <LogOut className='text-gray-600 group-hover:text-red-600' size={20}/>
+                                                <span className='text-sm font-medium text-gray-700 group-hover:text-red-600'>Logout</span>
                                             </div>
                                         </div>
                                     </div>
@@ -97,10 +121,8 @@ const Navbar = () => {
                             </Popover>
                         )
                     }
-
                 </div>
             </div>
-
         </div>
     )
 }
