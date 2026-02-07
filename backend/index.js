@@ -18,10 +18,11 @@ app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 
 const corsOptions = {
-    // Ikkada mee Vercel URL and Localhost rendu allow chesthunnam
-    origin: ['https://job-portal-full-stack-rosy.vercel.app'],
-    credentials: true
-}
+  origin: "https://job-portal-full-stack-rosy.vercel.app",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
 
 app.use(cors(corsOptions));
 
