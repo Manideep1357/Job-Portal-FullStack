@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 const corsOptions = {
     // Ikkada mee Vercel URL and Localhost rendu allow chesthunnam
-    origin: ['https://job-portal-full-stack-rosy.vercel.app', 'http://localhost:5173'],
+    origin: ['https://job-portal-full-stack-rosy.vercel.app'],
     credentials: true
 }
 
